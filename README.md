@@ -8,29 +8,19 @@ Ensure you have the following installed on your system
 
 ### Git
 
-#### Debian Based Distros
-
-```
-apt-get -S git
-```
-
-### Stow
-
-```
-pacman -S stow
-```
-
 ## Installation
 
 First, check out the dotfiles repo in your $HOME directory using git
 
 ```
-$ git clone git@github.com/thenew-programer/.dotfiles.git
-$ cd dotfiles
+$ git clone git@github.com/thenew-programer/.jos-files.git
+$ cd .jos-files
 ```
 
-then use GNU stow to create symlinks
+then run **_bootstrap.sh_**
 
 ```
-$ stow .
+$ cd scripts
+$ chmod 775 bootstrap.sh
+$ ./bootstrap.sh
 ```
