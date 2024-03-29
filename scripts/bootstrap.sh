@@ -72,3 +72,4 @@ mysql -u root -e "ALTER USER root@localhost IDENTIFIED WITH mysql_native_passwor
 
 # Create a projects directory
 mkdir $HOME/Code
+stow .
