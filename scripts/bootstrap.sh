@@ -2,6 +2,34 @@
 
 echo "Setting up your system..."
 
+# Array of config directories
+config_dirs=("~/.config/zap" "~/.config/picom" "~/.config/alacritty" "~/.config/zsh" "~/.config/i3" "~/.config/nvim" ".git")
+config_files=(".bashrc" ".zshrc" ".profile" ".xinitrc" ".Xresources" ".p10K.zsh" ".gitconfig")
+# Backup directory
+backup_dir="$HOME/.config_backup"
+
+# Create backup directory if it doesn't exist
+mkdir -p "$backup_dir"
+
+# Function to move existing config directories/files to backup
+move_to_backup() {
+    for dir in "${config_dirs[@]}"; do
+        if [ -d "$HOME/$dir" ]; then
+            echo "Moving $dir to $backup_dir/$dir.old"
+            mv "$HOME/$dir" "$backup_dir/$dir.old"
+        fi
+    done
+    for file in "${config_files[@]}"; do
+        if [ -f "$HOME/$file" ]; then
+            echo "Moving $file to $backup_dir/$file.old"
+            mv "$HOME/$file" "$backup_dir/$file.old"
+        fi
+    echo "Existing config files/directories moved to $backup_dir"
+}
+
+# Move existing config files/directories to backup
+move_to_backup
+
 # Function to install packages using Homebrew
 install_with_brew() {
     # Check for Homebrew and install if we don't have it
@@ -66,7 +94,6 @@ while true; do
 done
 
 # Removes .zshrc from $HOME (if it exists) and symlinks the .zshrc file from the .dotfiles
-rm -rf $HOME/.zshrc
 # Set default MySQL root password and auth type
 mysql -u root -e "ALTER USER root@localhost IDENTIFIED WITH mysql_native_password BY 'root'; FLUSH PRIVILEGES;"
 
