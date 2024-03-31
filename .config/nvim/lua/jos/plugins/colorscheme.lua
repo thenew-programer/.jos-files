@@ -1,10 +1,10 @@
 return {
-  "folke/tokyonight.nvim",
-  lazy = false,
-  priority = 1000,
-  opts = {},
-  config = function()
-     -- load the colorscheme here
-      vim.cmd([[colorscheme tokyonight]])
-    end
+	"catppuccin/nvim",
+	lazy = false,
+	priority = 1000,
+	name = "catppuccin",
+	config = function()
+		-- load the colorscheme here
+		vim.cmd([[colorscheme catppuccin-mocha]])
+	end,
 }

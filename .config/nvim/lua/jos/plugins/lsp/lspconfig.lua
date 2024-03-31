@@ -1,216 +1,224 @@
 return {
-	"neovim/nvim-lspconfig",
-	event = { "BufReadPre", "BufNewFile" },
+	"VonHeikemen/lsp-zero.nvim",
+	branch = "v2.x",
 	dependencies = {
-		"hrsh7th/cmp-nvim-lsp",
-		{ "antosha417/nvim-lsp-file-operations", config = true },
+		-- LSP Support
+		{ "neovim/nvim-lspconfig" }, -- Required
+		{ -- Optional
+			"williamboman/mason.nvim",
+			build = function()
+				pcall(vim.cmd, "MasonUpdate")
+			end,
+		},
+		{ "williamboman/mason-lspconfig.nvim" }, -- Optional
+
+		{ "WhoIsSethDaniel/mason-tool-installer.nvim" }, -- Optional
+
+		-- Autocompletion
+		{ "hrsh7th/nvim-cmp" }, -- Required
+		{ "hrsh7th/cmp-nvim-lsp" }, -- Required
+		{ "L3MON4D3/LuaSnip" }, -- Required
+		{ "rafamadriz/friendly-snippets" },
+		{ "hrsh7th/cmp-buffer" },
+		{ "hrsh7th/cmp-path" },
+		{ "hrsh7th/cmp-cmdline" },
+		{ "saadparwaiz1/cmp_luasnip" },
 	},
 	config = function()
-		-- import lspconfig plugin
-		local lspconfig = require("lspconfig")
+		local lsp = require("lsp-zero")
 
-		-- import cmp-nvim-lsp plugin
-		local cmp_nvim_lsp = require("cmp_nvim_lsp")
+		lsp.on_attach(function(client, bufnr)
+			local opts = { buffer = bufnr, remap = false }
 
-		local keymap = vim.keymap -- for conciseness
+			vim.keymap.set("n", "gr", function()
+				vim.lsp.buf.references()
+			end, opts, { desc = "LSP Goto Reference" })
+			vim.keymap.set("n", "gd", function()
+				vim.lsp.buf.definition()
+			end, opts, { desc = "LSP Goto Definition" })
+			vim.keymap.set("n", "K", function()
+				vim.lsp.buf.hover()
+			end, opts, { desc = "LSP Hover" })
+			vim.keymap.set("n", "<leader>vws", function()
+				vim.lsp.buf.workspace_symbol()
+			end, opts, { desc = "LSP Workspace Symbol" })
+			vim.keymap.set("n", "<leader>vd", function()
+				vim.diagnostic.setloclist()
+			end, opts, { desc = "LSP Show Diagnostics" })
+			vim.keymap.set("n", "[d", function()
+				vim.diagnostic.goto_next()
+			end, opts, { desc = "Next Diagnostic" })
+			vim.keymap.set("n", "]d", function()
+				vim.diagnostic.goto_prev()
+			end, opts, { desc = "Previous Diagnostic" })
+			vim.keymap.set("n", "<leader>vca", function()
+				vim.lsp.buf.code_action()
+			end, opts, { desc = "LSP Code Action" })
+			vim.keymap.set("n", "<leader>vrr", function()
+				vim.lsp.buf.references()
+			end, opts, { desc = "LSP References" })
+			vim.keymap.set("n", "<leader>vrn", function()
+				vim.lsp.buf.rename()
+			end, opts, { desc = "LSP Rename" })
+			vim.keymap.set("i", "<C-h>", function()
+				vim.lsp.buf.signature_help()
+			end, opts, { desc = "LSP Signature Help" })
+		end)
 
-		local opts = { noremap = true, silent = true }
-		-- local on_attach = function(client, bufnr)
-		-- 	opts.buffer = bufnr
-		--
-		-- 	keymap.set("n", "gD", ":lua vim.lsp.buf.declaration()<CR>", opts)
-		-- 	keymap.set("n", "gd", ":lua vim.lsp.buf.definition()<CR>", opts)
-		-- 	keymap.set("n", "K", ":lua vim.lsp.buf.hover()<CR>", opts)
-		-- 	keymap.set("n", "gI", ":lua vim.lsp.buf.implementation()<CR>", opts)
-		-- 	keymap.set("n", "gr", ":lua vim.lsp.buf.references()<CR>", opts)
-		-- 	keymap.set("n", "gl", ":lua vim.diagnostic.open_float()<CR>", opts)
-		-- 	keymap.set("n", "<leader>lf", ":lua vim.lsp.buf.format{ async = true }<CR>", opts)
-		-- 	keymap.set("n", "<leader>li", ":LspInfo<CR>", opts)
-		-- 	keymap.set("n", "<leader>lI", ":LspInstallInfo<CR>", opts)
-		-- 	keymap.set("n", "<leader>la", ":lua vim.lsp.buf.code_action()<CR>", opts)
-		-- 	keymap.set("n", "<leader>lj", ":lua vim.diagnostic.goto_next({buffer=0})<CR>", opts)
-		-- 	keymap.set("n", "<leader>lk", ":lua vim.diagnostic.goto_prev({buffer=0})<CR>", opts)
-		-- 	keymap.set("n", "<leader>lr", ":lua vim.lsp.buf.rename()<CR>", opts)
-		-- 	keymap.set("n", "<leader>ls", ":lua vim.lsp.buf.signature_help()<CR>", opts)
-		-- 	keymap.set("n", "<leader>lq", ":lua vim.diagnostic.setloclist()<CR>", opts)
-		--
-		-- 	-- set keybinds
-		-- 	-- opts.desc = "Show LSP references"
-		-- 	-- keymap.set("n", "gR", ":Telescope lsp_references<CR>", opts) -- show definition, references
-		-- 	--
-		-- 	-- opts.desc = "Go to declaration"
-		-- 	-- keymap.set("n", "gD", vim.lsp.buf.declaration, opts) -- go to declaration
-		-- 	--
-		-- 	-- opts.desc = "Show LSP definitions"
-		-- 	-- keymap.set("n", "gd", ":Telescope lsp_definitions<CR>", opts) -- show lsp definitions
-		-- 	--
-		-- 	-- opts.desc = "Show LSP implementations"
-		-- 	-- keymap.set("n", "gi", ":Telescope lsp_implementations<CR>", opts) -- show lsp implementations
-		-- 	--
-		-- 	-- opts.desc = "Show LSP type definitions"
-		-- 	-- keymap.set("n", "gt", ":Telescope lsp_type_definitions<CR>", opts) -- show lsp type definitions
-		-- 	--
-		-- 	-- opts.desc = "See available code actions"
-		-- 	-- keymap.set({ "n", "v" }, "<leader>ca", vim.lsp.buf.code_action, opts) -- see available code actions, in visual mode will apply to selection
-		-- 	--
-		-- 	-- opts.desc = "Smart rename"
-		-- 	-- keymap.set("n", "<leader>rn", vim.lsp.buf.rename, opts) -- smart rename
-		-- 	--
-		-- 	--
-		-- 	-- keymap.set("n", "<leader>D", ":Telescope diagnostics bufnr=0<CR>", opts) -- show  diagnostics for file
-		-- 	--
-		-- 	-- opts.desc = "Show line diagnostics"
-		-- 	-- keymap.set("n", "<leader>d", vim.diagnostic.open_float, opts) -- show diagnostics for line
-		-- 	--
-		-- 	-- opts.desc = "Go to previous diagnostic"
-		-- 	-- keymap.set("n", "[d", vim.diagnostic.goto_prev, opts) -- jump to previous diagnostic in buffer
-		-- 	--
-		-- 	--    opts.desc = "Go to next diagnostic"
-		-- 	-- keymap.set("n", "]d", vim.diagnostic.goto_next, opts) -- jump to next diagnostic in buffer
-		-- 	--
-		-- 	-- opts.desc = "Show documentation for what is under cursor"
-		-- 	-- keymap.set("n", "K", vim.lsp.buf.hover, opts) -- show documentation for what is under cursor
-		-- 	--
-		-- 	-- opts.desc = "Restart LSP"
-		-- 	-- keymap.set("n", "<leader>rs", ":LspRestart<CR>", opts) -- mapping to restart lsp if necessary
-		-- end
-		local on_attach = function(client, bufnr)
-			local function buf_set_keymap(...)
-				vim.api.nvim_buf_set_keymap(bufnr, ...)
-			end
-			local function buf_set_option(...)
-				vim.api.nvim_buf_set_option(bufnr, ...)
-			end
-
-			local opts = { noremap = true, silent = true }
-
-			buf_set_keymap("n", "gD", ":lua vim.lsp.buf.declaration()<CR>", opts)
-			buf_set_keymap("n", "gd", ":lua vim.lsp.buf.definition()<CR>", opts)
-			buf_set_keymap("n", "K", ":lua vim.lsp.buf.hover()<CR>", opts)
-			buf_set_keymap("n", "gI", ":lua vim.lsp.buf.implementation()<CR>", opts)
-			buf_set_keymap("n", "gr", ":lua vim.lsp.buf.references()<CR>", opts)
-			buf_set_keymap("n", "gl", ":lua vim.diagnostic.open_float()<CR>", opts)
-			buf_set_keymap("n", "<leader>lf", ":lua vim.lsp.buf.formatting()<CR>", opts)
-			buf_set_keymap("n", "<leader>li", ":LspInfo<CR>", opts)
-			buf_set_keymap("n", "<leader>lI", ":LspInstallInfo<CR>", opts)
-			buf_set_keymap("n", "<leader>la", ":lua vim.lsp.buf.code_action()<CR>", opts)
-			buf_set_keymap(
-				"n",
-				"<leader>lj",
-				':lua vim.diagnostic.goto_next({popup_opts = {border = "single"}})<CR>',
-				opts
-			)
-			buf_set_keymap(
-				"n",
-				"<leader>lk",
-				':lua vim.diagnostic.goto_prev({popup_opts = {border = "single"}})<CR>',
-				opts
-			)
-			buf_set_keymap("n", "<leader>lr", ":lua vim.lsp.buf.rename()<CR>", opts)
-			buf_set_keymap("n", "<leader>ls", ":lua vim.lsp.buf.signature_help()<CR>", opts)
-			buf_set_keymap("n", "<leader>lq", ":lua vim.diagnostic.setloclist()<CR>", opts)
-
-			-- Enable completion triggered by <c-x><c-o>
-			buf_set_option("omnifunc", "v:lua.vim.lsp.omnifunc")
-		end
-
-		-- used to enable autocompletion (assign to every lsp server config)
-		local capabilities = cmp_nvim_lsp.default_capabilities()
-
-		-- Change the Diagnostic symbols in the sign column (gutter)
-		-- (not in youtube nvim video)
-		local signs = { Error = " ", Warn = " ", Hint = "󰠠 ", Info = " " }
-		for type, icon in pairs(signs) do
-			local hl = "DiagnosticSign" .. type
-			vim.fn.sign_define(hl, { text = icon, texthl = hl, numhl = "" })
-		end
-
-		-- configure html server
-		lspconfig["html"].setup({
-			capabilities = capabilities,
-			on_attach = on_attach,
-		})
-
-		-- configure typescript server with plugin
-		lspconfig["tsserver"].setup({
-			capabilities = capabilities,
-			on_attach = on_attach,
-		})
-
-		-- configure css server
-		lspconfig["cssls"].setup({
-			capabilities = capabilities,
-			on_attach = on_attach,
-		})
-
-		-- configure tailwindcss server
-		lspconfig["tailwindcss"].setup({
-			capabilities = capabilities,
-			on_attach = on_attach,
-		})
-
-		-- configure svelte server
-		lspconfig["svelte"].setup({
-			capabilities = capabilities,
-			on_attach = function(client, bufnr)
-				on_attach(client, bufnr)
-
-				vim.api.nvim_create_autocmd("BufWritePost", {
-					pattern = { "*.js", "*.ts" },
-					callback = function(ctx)
-						if client.name == "svelte" then
-							client.notify("$/onDidChangeTsOrJsFile", { uri = ctx.file })
-						end
-					end,
-				})
-			end,
-		})
-
-		-- configure prisma orm server
-		lspconfig["prismals"].setup({
-			capabilities = capabilities,
-			on_attach = on_attach,
-		})
-
-		-- configure graphql language server
-		lspconfig["graphql"].setup({
-			capabilities = capabilities,
-			on_attach = on_attach,
-			filetypes = { "graphql", "gql", "svelte", "typescriptreact", "javascriptreact" },
-		})
-
-		-- configure emmet language server
-		lspconfig["emmet_ls"].setup({
-			capabilities = capabilities,
-			on_attach = on_attach,
-			filetypes = { "html", "typescriptreact", "javascriptreact", "css", "sass", "scss", "less", "svelte" },
-		})
-
-		-- configure python server
-		lspconfig["pyright"].setup({
-			capabilities = capabilities,
-			on_attach = on_attach,
-		})
-
-		-- configure lua server (with special settings)
-		lspconfig["lua_ls"].setup({
-			capabilities = capabilities,
-			on_attach = on_attach,
-			settings = { -- custom settings for lua
-				Lua = {
-					-- make the language server recognize "vim" global
-					diagnostics = {
-						globals = { "vim" },
-					},
-					workspace = {
-						-- make language server aware of runtime files
-						library = {
-							[vim.fn.expand("$VIMRUNTIME/lua")] = true,
-							[vim.fn.stdpath("config") .. "/lua"] = true,
-						},
-					},
+		require("mason").setup({
+			ui = {
+				icons = {
+					package_installed = "✓",
+					package_pending = "➜",
+					package_uninstalled = "✗",
 				},
 			},
+		})
+		require("mason-tool-installer").setup({
+
+			-- a list of all tools you want to ensure are installed upon
+			-- start
+			ensure_installed = {
+
+				-- you can pin a tool to a particular version
+				{ "golangci-lint", version = "v1.47.0" },
+
+				-- you can turn off/on auto_update per tool
+				{ "bash-language-server", auto_update = true },
+
+				"lua-language-server",
+				"vim-language-server",
+				"gopls",
+				"stylua",
+				"shellcheck",
+				"editorconfig-checker",
+				"gofumpt",
+				"golines",
+				"gomodifytags",
+				"gotests",
+				"impl",
+				"json-to-struct",
+				"luacheck",
+				"misspell",
+				"revive",
+				"shellcheck",
+				"shfmt",
+				"staticcheck",
+				"vint",
+				"black",
+				"flake8",
+				"eslint",
+				"prettier",
+				"cpplint",
+				"clang-format",
+				"beautysh",
+				"htmlbeautifier",
+			},
+
+			-- if set to true this will check each tool for updates. If updates
+			-- are available the tool will be updated. This setting does not
+			-- affect :MasonToolsUpdate or :MasonToolsInstall.
+			-- Default: false
+			auto_update = false,
+
+			-- automatically install / update on startup. If set to false nothing
+			-- will happen on startup. You can use :MasonToolsInstall or
+			-- :MasonToolsUpdate to install tools and check for updates.
+			-- Default: true
+			run_on_start = true,
+
+			-- set a delay (in ms) before the installation starts. This is only
+			-- effective if run_on_start is set to true.
+			-- e.g.: 5000 = 5 second delay, 10000 = 10 second delay, etc...
+			-- Default: 0
+			start_delay = 3000, -- 3 second delay
+
+			-- Only attempt to install if 'debounce_hours' number of hours has
+			-- elapsed since the last time Neovim was started. This stores a
+			-- timestamp in a file named stdpath('data')/mason-tool-installer-debounce.
+			-- This is only relevant when you are using 'run_on_start'. It has no
+			-- effect when running manually via ':MasonToolsInstall' etc....
+			-- Default: nil
+			debounce_hours = 5, -- at least 5 hours between attempts to install/update
+		})
+		require("mason-lspconfig").setup({
+			ensure_installed = {
+				"tsserver",
+				"eslint",
+				"emmetls",
+				"jdtls",
+				"lua_ls",
+				"jsonls",
+				"html",
+				"tailwindcss",
+				"pylsp",
+				"dockerls",
+				"bashls",
+				"marksman",
+				"cssls",
+				"clangd",
+				"angularls",
+			},
+			handlers = {
+				lsp.default_setup,
+				lua_ls = function()
+					local lua_opts = lsp.nvim_lua_ls()
+					require("lspconfig").lua_ls.setup(lua_opts)
+				end,
+			},
+		})
+
+		local cmp_action = require("lsp-zero").cmp_action()
+		local cmp = require("cmp")
+		local cmp_select = { behavior = cmp.SelectBehavior.Select }
+
+		require("luasnip.loaders.from_vscode").lazy_load()
+
+		-- `/` cmdline setup.
+		cmp.setup.cmdline("/", {
+			mapping = cmp.mapping.preset.cmdline(),
+			sources = {
+				{ name = "buffer" },
+			},
+		})
+
+		-- `:` cmdline setup.
+		cmp.setup.cmdline(":", {
+			mapping = cmp.mapping.preset.cmdline(),
+			sources = cmp.config.sources({
+				{ name = "path" },
+			}, {
+				{
+					name = "cmdline",
+					option = {
+						ignore_cmds = { "Man", "!" },
+					},
+				},
+			}),
+		})
+
+		cmp.setup({
+			snippet = {
+				expand = function(args)
+					require("luasnip").lsp_expand(args.body)
+				end,
+			},
+			sources = {
+				{ name = "nvim_lsp" },
+				{ name = "luasnip", keyword_length = 2 },
+				{ name = "buffer", keyword_length = 3 },
+				{ name = "path" },
+			},
+			mapping = cmp.mapping.preset.insert({
+				["<C-p>"] = cmp.mapping.select_prev_item(cmp_select),
+				["<C-n>"] = cmp.mapping.select_next_item(cmp_select),
+				["<CR>"] = cmp.mapping.confirm({ select = true }),
+				["<C-Space>"] = cmp.mapping.complete(),
+				["<C-f>"] = cmp_action.luasnip_jump_forward(),
+				["<C-b>"] = cmp_action.luasnip_jump_backward(),
+				["<Tab>"] = cmp_action.luasnip_supertab(),
+				["<S-Tab>"] = cmp_action.luasnip_shift_supertab(),
+			}),
 		})
 	end,
 }

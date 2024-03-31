@@ -45,7 +45,6 @@ keymap("n", "<leader>d", ":bdelete<CR>", opts)
 
 -- Open a new buffers
 keymap("n", "<leader>e", ":e ", nopts)
-keymap("n", "<leader>v", ":vsplit ", nopts)
 
 -- Insert --
 -- Press jk fast to exit insert mode
