@@ -17,10 +17,14 @@ $ git clone git@github.com/thenew-programer/.jos-files.git
 $ cd .jos-files
 ```
 
-then run **_bootstrap.sh_**
+then run **_bootstrap.sh_**:
 
 ```
 $ cd scripts
 $ chmod 775 bootstrap.sh
 $ ./bootstrap.sh
+```
+if bootstrap runs successfully **run**:
+```
+$ stow .
 ```
