@@ -99,6 +99,7 @@ vim.g.have_nerd_font = true
 --  For more options, you can see `:help option-list`
 
 -- Make line numbers default
+vim.opt.modeline = false
 vim.opt.number = true
 -- You can also add relative line numbers, to help with jumping.
 --  Experiment for yourself to see if you like it!
@@ -106,6 +107,9 @@ vim.opt.number = true
 
 -- Enable mouse mode, can be useful for resizing splits for example!
 vim.opt.mouse = 'a'
+
+vim.opt.swapfile = false
+
 
 -- Don't show the mode, since it's already in the status line
 vim.opt.showmode = false
@@ -144,7 +148,8 @@ vim.opt.splitbelow = true
 --  and `:help 'listchars'`
 -- vim.opt.list = true
 -- vim.opt.listchars = { tab = '» ', trail = '·', nbsp = '␣' }
-vim.opt.tabstop = 2
+vim.opt.tabstop = 4
+vim.opt.shiftwidth = 4
 
 -- Preview substitutions live, as you type!
 vim.opt.inccommand = 'split'
@@ -271,7 +276,7 @@ vim.opt.rtp:prepend(lazypath)
 -- NOTE: Here is where you install your plugins.
 require('lazy').setup({
   -- NOTE: Plugins can be added with a link (or for a github repo: 'owner/repo' link).
-  'tpope/vim-sleuth', -- Detect tabstop and shiftwidth automatically
+  -- 'tpope/vim-sleuth', -- Detect tabstop and shiftwidth automatically
 
   -- NOTE: Plugins can also be added by using a table,
   -- with the first argument being the link and the following
@@ -358,28 +363,28 @@ require('lazy').setup({
   -- after the plugin has been loaded:
   --  config = function() ... end
 
-  { -- Useful plugin to show you pending keybinds.
-    'folke/which-key.nvim',
-    event = 'VimEnter', -- Sets the loading event to 'VimEnter'
-    config = function() -- This is the function that runs, AFTER loading
-      require('which-key').setup()
-
-      -- Document existing key chains
-      require('which-key').register {
-        ['<leader>c'] = { name = '[C]ode', _ = 'which_key_ignore' },
-        ['<leader>d'] = { name = '[D]ocument', _ = 'which_key_ignore' },
-        ['<leader>r'] = { name = '[R]ename', _ = 'which_key_ignore' },
-        ['<leader>s'] = { name = '[S]earch', _ = 'which_key_ignore' },
-        ['<leader>w'] = { name = '[W]orkspace', _ = 'which_key_ignore' },
-        ['<leader>t'] = { name = '[T]oggle', _ = 'which_key_ignore' },
-        ['<leader>h'] = { name = 'Git [H]unk', _ = 'which_key_ignore' },
-      }
-      -- visual mode
-      require('which-key').register({
-        ['<leader>h'] = { 'Git [H]unk' },
-      }, { mode = 'v' })
-    end,
-  },
+  -- { -- Useful plugin to show you pending keybinds.
+  --   'folke/which-key.nvim',
+  --   event = 'VimEnter', -- Sets the loading event to 'VimEnter'
+  --   config = function() -- This is the function that runs, AFTER loading
+  --     require('which-key').setup()
+  --
+  --     -- Document existing key chains
+  --     require('which-key').register {
+  --       ['<leader>c'] = { name = '[C]ode', _ = 'which_key_ignore' },
+  --       ['<leader>d'] = { name = '[D]ocument', _ = 'which_key_ignore' },
+  --       ['<leader>r'] = { name = '[R]ename', _ = 'which_key_ignore' },
+  --       ['<leader>s'] = { name = '[S]earch', _ = 'which_key_ignore' },
+  --       ['<leader>w'] = { name = '[W]orkspace', _ = 'which_key_ignore' },
+  --       ['<leader>t'] = { name = '[T]oggle', _ = 'which_key_ignore' },
+  --       ['<leader>h'] = { name = 'Git [H]unk', _ = 'which_key_ignore' },
+  --     }
+  --     -- visual mode
+  --     require('which-key').register({
+  --       ['<leader>h'] = { 'Git [H]unk' },
+  --     }, { mode = 'v' })
+  --   end,
+  -- },
 
   -- NOTE: Plugins can specify dependencies.
   --
@@ -653,9 +658,9 @@ require('lazy').setup({
       local servers = {
         clangd = {},
         -- gopls = {},
-        marksman = {},
+        -- marksman = {},
         pyright = {},
-        bashls = {},
+        -- bashls = {},
         -- rust_analyzer = {},
         -- ... etc. See `:help lspconfig-all` for a list of all the pre-configured LSPs
         --
@@ -663,9 +668,9 @@ require('lazy').setup({
         --    https://github.com/pmizio/typescript-tools.nvim
         --
         -- But for many setups, the LSP (`tsserver`) will work just fine
-        tsserver = {},
+        -- tsserver = {},
         --
-        emmet_ls = {},
+        -- emmet_ls = {},
 
         lua_ls = {
           -- cmd = {...},
@@ -696,9 +701,9 @@ require('lazy').setup({
       local ensure_installed = vim.tbl_keys(servers or {})
       vim.list_extend(ensure_installed, {
         'stylua', -- Used to format Lua code
-        'black', -- Used to format Python code
-        'prettier', -- Used to format js shitty code
-        'clang-format', -- Use to format {c, c++} code
+        -- 'black', -- Used to format Python code
+        -- 'prettier', -- Used to format js shitty code
+        -- 'clang-format', -- Use to format {c, c++} code
       })
       require('mason-tool-installer').setup { ensure_installed = ensure_installed }
 
@@ -717,45 +722,45 @@ require('lazy').setup({
     end,
   },
 
-  { -- Autoformat
-    'stevearc/conform.nvim',
-    lazy = false,
-    keys = {
-      {
-        '<leader>f',
-        function()
-          require('conform').format { async = true, lsp_fallback = true }
-        end,
-        mode = '',
-        desc = '[F]ormat buffer',
-      },
-    },
-    opts = {
-      notify_on_error = false,
-      format_on_save = function(bufnr)
-        -- Disable "format_on_save lsp_fallback" for languages that don't
-        -- have a well standardized coding style. You can add additional
-        -- languages here or re-enable it for the disabled ones.
-        local disable_filetypes = { c = true, cpp = true }
-        return {
-          timeout_ms = 500,
-          lsp_fallback = not disable_filetypes[vim.bo[bufnr].filetype],
-        }
-      end,
-      formatters_by_ft = {
-        lua = { 'stylua' },
-        -- Conform can also run multiple formatters sequentially
-        python = { 'black' },
-        html = { 'htmlbeautifier' },
-        --
-        -- You can use a sub-list to tell conform to run *until* a formatter
-        -- is found.
-        c = { 'clang-format' },
-        cpp = { 'clang-format' },
-        javascript = { { 'prettierd', 'prettier' } },
-      },
-    },
-  },
+  -- { -- Autoformat
+  --   'stevearc/conform.nvim',
+  --   lazy = false,
+  --   keys = {
+  --     {
+  --       '<leader>f',
+  --       function()
+  --         require('conform').format { async = true, lsp_fallback = true }
+  --       end,
+  --       mode = '',
+  --       desc = '[F]ormat buffer',
+  --     },
+  --   },
+  --   opts = {
+  --     notify_on_error = false,
+  --     format_on_save = function(bufnr)
+  --       -- Disable "format_on_save lsp_fallback" for languages that don't
+  --       -- have a well standardized coding style. You can add additional
+  --       -- languages here or re-enable it for the disabled ones.
+  --       local disable_filetypes = { c = true, cpp = true }
+  --       return {
+  --         timeout_ms = 500,
+  --         lsp_fallback = not disable_filetypes[vim.bo[bufnr].filetype],
+  --       }
+  --     end,
+  --     formatters_by_ft = {
+  --       lua = { 'stylua' },
+  --       -- Conform can also run multiple formatters sequentially
+  --       -- python = { 'black' },
+  --       -- html = { 'htmlbeautifier' },
+  --       --
+  --       -- You can use a sub-list to tell conform to run *until* a formatter
+  --       -- is found.
+  --       -- c = { 'clang-format' },
+  --       -- cpp = { 'clang-format' },
+  --       -- javascript = { { 'prettierd', 'prettier' } },
+  --     },
+  --   },
+  -- },
 
   { -- Autocompletion
     'hrsh7th/nvim-cmp',
